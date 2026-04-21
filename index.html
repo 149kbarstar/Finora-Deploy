@@ -2939,7 +2939,13 @@ function walletBal(wid, upTo=null) {
   }
   return b;
 }
-function totalNW(upTo=null) { return wallets.reduce((s,w) => s + walletBal(w.id, upTo), 0); }
+// hutang wallets are liabilities — subtracted from net worth, not added
+function totalNW(upTo=null) {
+  return wallets.reduce((s,w) => {
+    const b = walletBal(w.id, upTo);
+    return s + (w.wtype === 'hutang' ? -b : b);
+  }, 0);
+}
 
 function walletName(wid) { return wallets.find(w => w.id === wid)?.name || '—'; }
 function txWalletDisplay(tx) {
@@ -3033,10 +3039,14 @@ function _renderDashBase() {
   document.getElementById('dash-wallets').innerHTML = wallets.length === 0
     ? `<p style="color:var(--text3);font-size:12.5px">Belum ada kantong. <a href="#" onclick="goPage('wallets');return false" style="color:var(--accent)">Tambah →</a></p>`
     : wallets.map(w => {
-        const b = walletBal(w.id);
+        const b   = walletBal(w.id);
+        const isDebt = w.wtype === 'hutang';
+        const dispB  = isDebt ? -b : b;   // show debt as negative
+        const clr    = isDebt ? 'var(--red)' : (b < 0 ? 'var(--red)' : 'var(--text)');
+        const badge  = isDebt ? `<span style="font-size:9px;background:#fee2e2;color:var(--red);border-radius:4px;padding:1px 5px;margin-left:4px;font-weight:600">HUTANG</span>` : '';
         return `<div class="wcard">
-          <div class="wn"><span>${w.name}</span><span class="dot" style="background:${w.color}"></span></div>
-          <div class="wb" style="color:${b<0?'var(--red)':'var(--text)'}">${rp(b)}</div>
+          <div class="wn"><span>${w.name}${badge}</span><span class="dot" style="background:${w.color}"></span></div>
+          <div class="wb" style="color:${clr}">${isDebt ? '− ' : ''}${rp(b)}</div>
           <div class="wo">${w.owner} · ${w.wtype}</div>
         </div>`;
       }).join('');
@@ -3401,13 +3411,16 @@ function renderWallets() {
     ? emptyStateHTML('wallets')
     : wallets.map(w=>{
         const b=walletBal(w.id);
+        const isDebt = w.wtype === 'hutang';
+        const dispClr = isDebt ? 'var(--red)' : (b<0?'var(--red)':'var(--text)');
+        const debtBadge = isDebt ? `<span style="font-size:9px;background:#fee2e2;color:var(--red);border-radius:4px;padding:1px 5px;font-weight:600;flex-shrink:0">HUTANG</span>` : '';
         const logoHtml = walletLogoHTML(w, 22);
         return`<div class="wcard">
           <div class="wn">
-            <span style="display:flex;align-items:center;gap:7px;min-width:0;flex:1">${logoHtml}<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${w.name}</span></span>
+            <span style="display:flex;align-items:center;gap:6px;min-width:0;flex:1">${logoHtml}<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${w.name}</span>${debtBadge}</span>
             <span class="dot" style="background:${w.color}"></span>
           </div>
-          <div class="wb" style="color:${b<0?'var(--red)':'var(--text)'}">${rp(b)}</div>
+          <div class="wb" style="color:${dispClr}">${isDebt?'− ':''}${rp(b)}</div>
           <div class="wo">${w.owner} · ${w.wtype}${w.currency && w.currency!=='IDR' ? ' · '+w.currency : ''}</div>
           <div class="wa">
             <button class="xbtn" onclick="editWallet('${w.id}')">Edit</button>
@@ -6185,10 +6198,8 @@ function recalculateWalletBalance(walletId) {
     // Atomic multi-path update: wallets + timestamp (avoids overwriting concurrent writes from other devices)
     if (_fbDb && _currentUserId) {
       const at = new Date().toISOString();
-      _fbDb.ref().update({
-        ['users/' + _currentUserId + '/wallets']: wallets,
-        ['users/' + _currentUserId + '/at']:      at,
-      }).then(() => LS.set('kk2_last_save', at))
+      _fbDb.ref('users/' + _currentUserId).update({ wallets, at })
+        .then(() => LS.set('kk2_last_save', at))
         .catch(e => console.error('[Reconcile] repair write failed:', e.message));
     }
   }
@@ -8543,19 +8554,22 @@ async function resetAllData() {
     _fbStopListening();
 
     // 2. Delete all user data from Firebase (keep profile node)
+    // IMPORTANT: use user-scoped ref, NOT root ref — root update requires
+    // root-level write permission which the rules don't grant.
     const uid = _currentUserId;
-    const updates = {
-      ['users/' + uid + '/wallets']:      null,
-      ['users/' + uid + '/transactions']: null,
-      ['users/' + uid + '/budgets']:      null,
-      ['users/' + uid + '/customCats']:   null,
-      ['users/' + uid + '/recurringList']:null,
-      ['users/' + uid + '/sinkingList']:  null,
-      ['users/' + uid + '/nwTarget']:     null,
-      ['users/' + uid + '/dailyStats']:   null,
-      ['users/' + uid + '/settings']:     null,
-    };
-    await _fbDb.ref().update(updates);
+    await _fbDb.ref('users/' + uid).update({
+      wallets:       null,
+      transactions:  null,
+      budgets:       null,
+      customCats:    null,
+      recurringList: null,
+      sinkingList:   null,
+      nwTarget:      null,
+      dailyStats:    null,
+      settings:      null,
+      at:            null,
+      v:             null,
+    });
 
     // 3. Clear all in-memory state
     wallets = []; transactions = []; budgets = []; customCats = [];
