@@ -3465,7 +3465,8 @@ function saveWallet() {
             cat: 'Saldo Awal', note: balNote,
             type: 'in', wallet: editWalletId, isOpeningBal: true, cAt: Date.now()
           };
-          _fbWriteTx(openTx); // listener updates transactions array
+          transactions.push(openTx); // optimistic: show balance immediately before Firebase confirms
+          _fbWriteTx(openTx);
         }
         w.initBal = 0;
       }
@@ -3489,6 +3490,7 @@ function saveWallet() {
         cat: 'Saldo Awal', note: balNote,
         type: 'in', wallet: wid, isOpeningBal: true, cAt: Date.now()
       };
+      transactions.push(openTx); // optimistic: show balance immediately before Firebase confirms
       _fbWriteTx(openTx);
     }
     toast('Kantong ditambahkan ✓');
@@ -6058,10 +6060,11 @@ function _fbStartListening(uid) {
     _fbTxRenderTimer = setTimeout(() => {
       renderDash();
       const pg = document.querySelector('.page.active')?.id?.replace('page-', '');
-      if (pg === 'hist')   renderHist();
-      if (pg === 'charts') renderCharts();
-      if (pg === 'recap')  renderRecap();
-      if (pg === 'budget') renderBudget();
+      if (pg === 'wallets') renderWallets(); // wallet balances change when txs update
+      if (pg === 'hist')    renderHist();
+      if (pg === 'charts')  renderCharts();
+      if (pg === 'recap')   renderRecap();
+      if (pg === 'budget')  renderBudget();
     }, 120);
   }
   window._fbTxHandler   = _fbTxHandler;   // expose for loadMoreTx()
@@ -6177,11 +6180,11 @@ function _validateTx(tx) {
 
 // ── Analytics event logger (Part 18) ────────────────────────────────────────
 function _logAnalytics(event, data) {
-  if (!_fbDb) return;
+  if (!_fbDb || !_currentUserId) return;
   try {
-    _fbDb.ref('system/analytics').push({
-      event, uid: _currentUserId || 'anonymous',
-      ts: new Date().toISOString(), ...( data || {})
+    // Write under user-scoped path to stay within Firebase security rules
+    _fbDb.ref('users/' + _currentUserId + '/analytics').push({
+      event, ts: new Date().toISOString(), ...( data || {})
     }).catch(() => {});  // silent — analytics must never block
   } catch (_) {}
 }
@@ -6406,6 +6409,7 @@ function _fbApplyData(d) {
   if (d.at) LS.set('kk2_last_save', d.at);
 
   renderDash();
+  renderWallets();
   refreshAllCatSelects();
   refreshWalletSelects();
 }
@@ -8543,20 +8547,17 @@ function closeResetModal() {
 }
 
 async function resetAllData() {
-  if (!_fbDb || !_currentUserId) {
-    toast('Tidak ada sesi aktif', 'err'); return;
+  // Capture UID FIRST — _fbStopListening() sets _currentUserId = null
+  const uid = _currentUserId;
+  if (!_fbDb || !uid) {
+    toast('Tidak ada sesi aktif — coba login ulang', 'err'); return;
   }
   const btn = document.getElementById('reset-data-btn');
   if (btn) { btn.disabled = true; btn.textContent = '⏳ Menghapus...'; }
 
   try {
-    // 1. Stop all listeners first
-    _fbStopListening();
-
-    // 2. Delete all user data from Firebase (keep profile node)
-    // IMPORTANT: use user-scoped ref, NOT root ref — root update requires
-    // root-level write permission which the rules don't grant.
-    const uid = _currentUserId;
+    // 1. Delete all user data from Firebase FIRST (before stopping listeners)
+    //    Use user-scoped ref — root ref requires root .write which rules deny.
     await _fbDb.ref('users/' + uid).update({
       wallets:       null,
       transactions:  null,
@@ -8571,10 +8572,14 @@ async function resetAllData() {
       v:             null,
     });
 
+    // 2. Stop listeners AFTER successful Firebase wipe
+    _fbStopListening();
+
     // 3. Clear all in-memory state
     wallets = []; transactions = []; budgets = []; customCats = [];
     recurringList = []; sinkingList = []; nwTarget = null;
     _txPageLimit = 1000; _txAllLoaded = false;
+    _currentUserId = uid;   // restore — _fbStopListening cleared it
 
     // 4. Clear localStorage (keep dark mode + auth prefs)
     [
@@ -8583,19 +8588,23 @@ async function resetAllData() {
       'kk2_onboarded','kk2_pending_queue','kk2_notifs','kk2_rec_auto_month',
     ].forEach(k => localStorage.removeItem(k));
 
-    // 5. Log analytics
-    _logAnalytics('data_reset', { uid });
+    // 5. Log analytics (before restarting listener overwrites uid)
+    try { _logAnalytics('data_reset', { uid }); } catch(_) {}
 
     // 6. Close modal + re-attach listener for fresh empty state
     closeResetModal();
     _fbStartListening(uid);
 
+    renderDash(); renderWallets();
     toast('✅ Semua data berhasil dihapus. Mulai fresh!', 'ok');
     goPage('dash');
   } catch(e) {
     console.error('[Reset] Failed:', e);
-    toast('❌ Reset gagal: ' + e.message, 'err');
-    if (btn) { btn.disabled = false; btn.textContent = '🗑 Hapus Semua Data'; btn.style.opacity = '1'; btn.style.pointerEvents = 'auto'; btn.style.cursor = 'pointer'; }
+    toast('❌ Reset gagal: ' + (e.code || e.message), 'err');
+    // Restore button + restart listeners so app isn't left broken
+    if (btn) { btn.disabled = false; btn.textContent = '🗑 Hapus Semua Data'; btn.style.opacity = '1'; btn.style.pointerEvents = 'auto'; }
+    if (!_currentUserId) _currentUserId = uid;
+    if (!_fbDataRef) _fbStartListening(uid);
   }
 }
 
