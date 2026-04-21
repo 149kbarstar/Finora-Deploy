@@ -1788,7 +1788,7 @@ body[data-fs="lg"]{ font-size:14.5px; }
       <tbody id="hist-rows"></tbody>
     </table></div>
     <div style="text-align:center;margin-top:1rem;padding-bottom:.5rem">
-      <button id="hist-load-more" class="bs" onclick="loadMoreTx()" style="display:none;padding:7px 20px">↓ Muat 50 Lagi</button>
+      <button id="hist-load-more" class="bs" onclick="loadMoreTx()" style="display:none;padding:7px 20px">↓ Muat 50 Transaksi Lagi</button>
       <div id="hist-tx-count" style="font-size:11px;color:var(--text3);margin-top:.5rem"></div>
     </div>
   </div>
@@ -5906,7 +5906,7 @@ let _fbTxRef       = null;    // dedicated realtime listener for users/{uid}/tra
 let _fbStatsRef    = null;    // realtime listener for today's dailyStats
 let _todayTxCount  = 0;       // cached from _fbStatsRef — used for daily limit guard
 const _TX_DAILY_LIMIT  = 100;   // hard cap per day (Part 7)
-let _txPageLimit       = 50;    // how many transactions to load (Part 9)
+let _txPageLimit       = 1000;  // initial load covers ~10 yrs of daily tx → walletBal() accurate (Part 9)
 let _txAllLoaded       = false; // true when loaded count < _txPageLimit
 let _fbTxRenderTimer   = null;  // debounce handle for tx listener re-renders
 
@@ -6135,9 +6135,13 @@ function recalculateWalletBalance(walletId) {
   if (stored !== undefined && Math.abs(computed - stored) > 1) {
     console.warn('[Reconcile] Wallet', w.name, '— stored:', stored, 'computed:', computed, '→ auto-repairing');
     w.cachedBalance = computed;
-    // Push repaired value to Firebase
+    // Atomic multi-path update: wallets + timestamp (avoids overwriting concurrent writes from other devices)
     if (_fbDb && _currentUserId) {
-      _fbDb.ref('users/' + _currentUserId + '/wallets').set(wallets)
+      const at = new Date().toISOString();
+      _fbDb.ref().update({
+        ['users/' + _currentUserId + '/wallets']: wallets,
+        ['users/' + _currentUserId + '/at']:      at,
+      }).then(() => LS.set('kk2_last_save', at))
         .catch(e => console.error('[Reconcile] repair write failed:', e.message));
     }
   }
@@ -8286,7 +8290,7 @@ async function logout() {
   // 2. Wipe all in-memory state + pagination state
   wallets = []; transactions = []; budgets = []; customCats = [];
   recurringList = []; sinkingList = []; nwTarget = null;
-  _txPageLimit = 50; _txAllLoaded = false;
+  _txPageLimit = 1000; _txAllLoaded = false;
 
   // 3. Clear user-specific localStorage (keep dark mode, tweaks prefs)
   [
@@ -8372,7 +8376,7 @@ async function loadUserData(uid) {
   }
 
   // 3. Reset pagination state for fresh session
-  _txPageLimit = 50;
+  _txPageLimit = 1000;
   _txAllLoaded = false;
 
   // 4. Show the main app and start realtime data listener at users/{uid}
@@ -8469,7 +8473,7 @@ window.addEventListener('unhandledrejection', e => {
 console.log('%c Finora V.1 ', 'background:#064e3b;color:#2dd98f;font-weight:bold;border-radius:4px;padding:2px 8px',
   '| Project:', FIREBASE_CONFIG?.projectId,
   '| DB:', FIREBASE_CONFIG?.databaseURL?.replace('https://','').replace('.firebasedatabase.app',''));
-console.log('[Finora V.1] Architecture: Firebase SSOT | Atomic writes | Paginated tx | Validated | Reconciled ✓');
+console.log('[Finora V.1] Architecture: Firebase SSOT | Atomic writes | Paginated tx (1000 init) | Validated | Reconciled ✓');
 </script>
 </body>
 </html>
