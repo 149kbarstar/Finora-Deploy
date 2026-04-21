@@ -1904,7 +1904,7 @@ body[data-fs="lg"]{ font-size:14.5px; }
               <option value="JPY">🇯🇵 JPY</option>
               <option value="AUD">🇦🇺 AUD</option>
             </select>
-            <input type="number" id="wf-bal" placeholder="0" inputmode="numeric" style="flex:1">
+            <input type="text" id="wf-bal" placeholder="0" inputmode="numeric" style="flex:1" oninput="_fmtAmtInput(this)" autocomplete="off">
           </div>
         </div>
     </div>
@@ -3383,7 +3383,7 @@ function renderWallets() {
 function saveWallet() {
   const name  = document.getElementById('wf-name').value.trim();
   const owner = document.getElementById('wf-owner').value;
-  const rawBal = +document.getElementById('wf-bal').value || 0;
+  const rawBal = _readAmt('wf-bal');
   const balCur = document.getElementById('wf-bal-currency')?.value || 'IDR';
   const bal    = (typeof toIDR === 'function' && balCur !== 'IDR') ? toIDR(rawBal, balCur) : rawBal;
   const color = document.getElementById('wf-color').value;
@@ -3481,7 +3481,7 @@ function editWallet(id) {
   document.getElementById('wf-owner').value = w.owner;
   // Show current total balance (initBal + all transactions)
   const currentBal = walletBal(w.id);
-  document.getElementById('wf-bal').value   = currentBal > 0 ? currentBal : 0;
+  _setAmt('wf-bal', currentBal > 0 ? currentBal : 0);
   document.getElementById('wf-color').value = w.color;
   const wtype = w.wtype || 'kas';
   if (typeof wfPickType === 'function') wfPickType(wtype);
@@ -3501,7 +3501,9 @@ function editWallet(id) {
 function cancelWalletEdit() {
   editWalletId = null;
   document.getElementById('wf-name').value  = '';
-  document.getElementById('wf-bal').value   = '';
+  _setAmt('wf-bal', 0);
+  const wfBalEl = document.getElementById('wf-bal');
+  if (wfBalEl) { wfBalEl.value = ''; wfBalEl.dataset.rawVal = '0'; }
   const bankIdEl = document.getElementById('wf-bankid');
   if (bankIdEl) bankIdEl.value = '';
   if (typeof wfPickType === 'function') wfPickType('kas');
