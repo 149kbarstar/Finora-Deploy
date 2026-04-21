@@ -2006,7 +2006,7 @@ body[data-fs="lg"]{ font-size:14.5px; }
     <p style="font-size:12px;color:var(--text2);margin-bottom:.5rem">Ketik <strong>RESET</strong> untuk konfirmasi:</p>
     <input type="text" id="reset-confirm-input" placeholder="Ketik RESET di sini..."
       style="width:100%;background:var(--bg3);border:1.5px solid var(--red);border-radius:7px;padding:9px 12px;font-family:'Sora',sans-serif;font-size:13px;outline:none;margin-bottom:1rem"
-      oninput="document.getElementById('reset-btn').disabled=this.value!=='RESET'; document.getElementById('reset-btn').style.opacity=this.value==='RESET'?'1':'.4'">
+      oninput="var _ok=this.value.trim().toUpperCase()==='RESET'; var _b=document.getElementById('reset-btn'); _b.disabled=!_ok; _b.style.opacity=_ok?'1':'.4'; _b.style.pointerEvents=_ok?'auto':'none'">
     <div class="mda">
       <button class="bs" onclick="closeResetModal()">Batal</button>
       <button class="bd" id="reset-btn" disabled onclick="resetAllData()" style="opacity:.4;transition:opacity .2s">🗑 Hapus Semua Data</button>
@@ -8513,7 +8513,7 @@ function openResetModal() {
   const inp = document.getElementById('reset-confirm-input');
   if (inp) inp.value = '';
   const btn = document.getElementById('reset-btn');
-  if (btn) { btn.disabled = true; btn.style.opacity = '.4'; }
+  if (btn) { btn.disabled = true; btn.style.opacity = '.4'; btn.style.pointerEvents = 'none'; }
 }
 
 function closeResetModal() {
