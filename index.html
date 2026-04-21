@@ -5926,7 +5926,7 @@ function _fbStartListening(uid) {
   _fbReady       = false;
   _currentUserId = uid;
   _fbDataRef     = _fbDb.ref('users/' + uid);
-  _fbDataRef.keepSynced(true);
+  // keepSynced() is mobile-only (iOS/Android SDK) — not available in JS Web SDK
 
   // ── Main listener: wallets, budgets, settings (NOT transactions) ────────────
   _fbDataRef.on('value', snap => {
