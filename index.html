@@ -5946,6 +5946,7 @@ const _TX_DAILY_LIMIT  = 100;   // hard cap per day (Part 7)
 let _txPageLimit       = 1000;  // initial load covers ~10 yrs of daily tx → walletBal() accurate (Part 9)
 let _txAllLoaded       = false; // true when loaded count < _txPageLimit
 let _fbTxRenderTimer   = null;  // debounce handle for tx listener re-renders
+let _fbOnlineNow       = true;  // toggled by .info/connected listener — must be declared before initFirebase()
 
 // ── Helper: Firebase object → JavaScript array ────────────────────────────────
 function _fbToArray(val) {
@@ -7430,7 +7431,7 @@ function _isDuplicateTx(amount, date, walletId, type) {
 // Buffers transactions recorded while Firebase is offline, then flushes
 // automatically when connectivity is restored. Matches Architecture spec §3.4.
 let _pendingQueue = JSON.parse(localStorage.getItem('kk2_pending_queue') || '[]');
-let _fbOnlineNow  = true;   // toggled by _fbSetStatus patch below
+// _fbOnlineNow declared above near other _fb* state vars (line ~5949)
 
 function _savePQ() { localStorage.setItem('kk2_pending_queue', JSON.stringify(_pendingQueue)); }
 
