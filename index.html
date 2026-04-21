@@ -2009,10 +2009,10 @@ body[data-fs="lg"]{ font-size:14.5px; }
     <p style="font-size:12px;color:var(--text2);margin-bottom:.5rem">Ketik <strong>RESET</strong> untuk konfirmasi:</p>
     <input type="text" id="reset-confirm-input" placeholder="Ketik RESET di sini..."
       style="width:100%;background:var(--bg3);border:1.5px solid var(--red);border-radius:7px;padding:9px 12px;font-family:'Sora',sans-serif;font-size:13px;outline:none;margin-bottom:1rem"
-      oninput="var _ok=this.value.trim().toUpperCase()==='RESET'; var _b=document.getElementById('reset-btn'); _b.disabled=!_ok; _b.style.opacity=_ok?'1':'.4'; _b.style.pointerEvents=_ok?'auto':'none'">
+      oninput="var _ok=this.value.trim().toUpperCase()==='RESET'; var _b=document.getElementById('reset-data-btn'); _b.disabled=!_ok; _b.style.opacity=_ok?'1':'.4'; _b.style.pointerEvents=_ok?'auto':'none'">
     <div class="mda">
       <button class="bs" onclick="closeResetModal()">Batal</button>
-      <button class="bd" id="reset-btn" disabled onclick="resetAllData()" style="opacity:.4;transition:opacity .2s">🗑 Hapus Semua Data</button>
+      <button class="bd" id="reset-data-btn" disabled onclick="resetAllData()" style="opacity:.4;transition:opacity .2s">🗑 Hapus Semua Data</button>
     </div>
   </div>
 </div>
@@ -3463,6 +3463,12 @@ function saveWallet() {
       ? (_fbDb.ref('users/' + _currentUserId + '/wallets').push().key || uid())
       : uid();
     wallets.push({id:wid, name, owner, initBal:0, color, wtype, bankId, currency});
+    // Push wallet to Firebase IMMEDIATELY (not debounced) before writing the
+    // opening-balance tx. _fbWriteTx triggers _fbDataRef listener which calls
+    // _fbApplyData — if wallet hasn't been pushed yet, the new wallet is lost.
+    LS.set('kk2_wallets', wallets);
+    clearTimeout(_fbSaveTimer);
+    _fbPushNow('wallet-create'); // sets _fbSkipNext=true, protects next listener event
     if (bal > 0) {
       const openTx = {
         id: _genTxId(), date: today(), amount: bal,
@@ -3470,7 +3476,7 @@ function saveWallet() {
         cat: 'Saldo Awal', note: balNote,
         type: 'in', wallet: wid, isOpeningBal: true, cAt: Date.now()
       };
-      _fbWriteTx(openTx); // listener updates transactions array
+      _fbWriteTx(openTx);
     }
     toast('Kantong ditambahkan ✓');
     _logAnalytics('wallet_created', { wtype });
@@ -8516,7 +8522,7 @@ function openResetModal() {
   if (el) { el.style.display = 'flex'; }
   const inp = document.getElementById('reset-confirm-input');
   if (inp) inp.value = '';
-  const btn = document.getElementById('reset-btn');
+  const btn = document.getElementById('reset-data-btn');
   if (btn) { btn.disabled = true; btn.style.opacity = '.4'; btn.style.pointerEvents = 'none'; }
 }
 
@@ -8529,7 +8535,7 @@ async function resetAllData() {
   if (!_fbDb || !_currentUserId) {
     toast('Tidak ada sesi aktif', 'err'); return;
   }
-  const btn = document.getElementById('reset-btn');
+  const btn = document.getElementById('reset-data-btn');
   if (btn) { btn.disabled = true; btn.textContent = '⏳ Menghapus...'; }
 
   try {
@@ -8575,7 +8581,7 @@ async function resetAllData() {
   } catch(e) {
     console.error('[Reset] Failed:', e);
     toast('❌ Reset gagal: ' + e.message, 'err');
-    if (btn) { btn.disabled = false; btn.textContent = '🗑 Hapus Semua Data'; btn.style.opacity = '1'; btn.style.pointerEvents = 'auto'; }
+    if (btn) { btn.disabled = false; btn.textContent = '🗑 Hapus Semua Data'; btn.style.opacity = '1'; btn.style.pointerEvents = 'auto'; btn.style.cursor = 'pointer'; }
   }
 }
 
