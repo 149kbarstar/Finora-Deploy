@@ -7,6 +7,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#064e3b">
 <title>Finora V.1 — Money Manager</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23064e3b'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-size='18' font-family='serif' fill='%232dd98f'%3E₊%3C/text%3E%3C/svg%3E">
+<link rel="shortcut icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23064e3b'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-size='18' font-family='serif' fill='%232dd98f'%3E₊%3C/text%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23064e3b'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-size='18' font-family='serif' fill='%232dd98f'%3E₊%3C/text%3E%3C/svg%3E">
 <!-- Firebase SDKs (compat) -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -8572,7 +8575,7 @@ async function resetAllData() {
   } catch(e) {
     console.error('[Reset] Failed:', e);
     toast('❌ Reset gagal: ' + e.message, 'err');
-    if (btn) { btn.disabled = false; btn.textContent = '🗑 Hapus Semua Data'; btn.style.opacity = '1'; }
+    if (btn) { btn.disabled = false; btn.textContent = '🗑 Hapus Semua Data'; btn.style.opacity = '1'; btn.style.pointerEvents = 'auto'; }
   }
 }
 
