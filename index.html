@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#064e3b">
+<meta name="theme-color" content="#1A3B2F">
 <title>Finora V.1 — Money Manager</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23064e3b'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-size='18' font-family='serif' fill='%232dd98f'%3E₊%3C/text%3E%3C/svg%3E">
 <link rel="shortcut icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23064e3b'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-size='18' font-family='serif' fill='%232dd98f'%3E₊%3C/text%3E%3C/svg%3E">
@@ -1476,6 +1476,227 @@ body[data-fs="lg"]{ font-size:14.5px; }
 /* Hide .app until auth resolves */
 .app{ visibility:hidden; }
 
+/* ══════════════════════════════════════════════════════════════════
+   STITCH DESIGN SYSTEM — Warm palette · Dark-green hero · White nav
+   ══════════════════════════════════════════════════════════════════ */
+
+/* ── Palette override ── */
+:root{
+  --bg:#F5F4EF; --bg2:#FFFFFF; --bg3:#EDE9E0; --bg4:#E3DDD3;
+  --border:#E8E3D9; --border2:#D5CEBC;
+  --text:#1A2416; --text2:#4A5740; --text3:#8B9480;
+  --dark-card:#1A3B2F; --dark-card2:#1F4438;
+  --accent:#F97316; --accent-d:#EA580C; --accent-bg:#FFF4EC;
+}
+
+/* ── Background warmth ── */
+body{ background:var(--bg); }
+.content{ background:var(--bg); }
+
+/* ── Bottom nav — white with warm border ── */
+.bottom-nav{
+  background:#FFFFFF !important;
+  border-top:1px solid #EDE9E0 !important;
+  box-shadow:0 -2px 20px rgba(26,59,47,.08) !important;
+}
+.bn-item{ color:#B5AFA2 !important; font-size:9.5px !important; }
+.bn-item.active{ color:#F97316 !important; font-weight:600 !important; }
+.bn-item.active .bn-icon{
+  transform:translateY(-2px) scale(1.15) !important;
+  filter:drop-shadow(0 2px 6px rgba(249,115,22,.45)) !important;
+}
+.bn-item.active::before{
+  background:#F97316 !important;
+  box-shadow:0 0 8px rgba(249,115,22,.5) !important;
+}
+body.dark .bottom-nav{
+  background:#1a1a1a !important;
+  border-top-color:#2a2a2a !important;
+}
+
+/* ── Mobile header — dark green ── */
+.mob-header{
+  background:linear-gradient(135deg,#1A3B2F,#1F4438) !important;
+  box-shadow:0 2px 16px rgba(26,59,47,.3) !important;
+}
+
+/* ── Hero balance card ── */
+.hero-balance{
+  background:linear-gradient(135deg,#1A3B2F 0%,#1F4438 55%,#235040 100%);
+  border-radius:24px;
+  padding:1.6rem 1.5rem 1.4rem;
+  margin-bottom:1.2rem;
+  position:relative;
+  overflow:hidden;
+  box-shadow:0 14px 36px rgba(26,59,47,.32),0 4px 12px rgba(26,59,47,.18);
+}
+.hero-balance::before{
+  content:'';position:absolute;top:-80px;right:-80px;
+  width:260px;height:260px;border-radius:50%;
+  background:radial-gradient(circle,rgba(249,115,22,.18),transparent 65%);
+  pointer-events:none;
+}
+.hero-balance::after{
+  content:'';position:absolute;bottom:-60px;left:-40px;
+  width:200px;height:200px;border-radius:50%;
+  background:radial-gradient(circle,rgba(45,217,143,.07),transparent 65%);
+  pointer-events:none;
+}
+.hero-balance .hb-inner{ position:relative;z-index:2; }
+.hero-balance .hb-label{
+  font-size:10px;color:rgba(255,255,255,.5);letter-spacing:.12em;
+  text-transform:uppercase;font-weight:600;margin-bottom:5px;
+}
+.hero-balance .hb-amount{
+  font-family:'Instrument Serif','Crimson Pro',serif;
+  font-size:2.4rem;color:#fff;letter-spacing:-.025em;
+  line-height:1;margin-bottom:1.15rem;
+}
+@media(max-width:767px){ .hero-balance .hb-amount{ font-size:2rem; } }
+.hero-balance .hb-stats{
+  display:flex;gap:0;
+  border-top:1px solid rgba(255,255,255,.12);
+  padding-top:.9rem;
+}
+.hb-stat{ flex:1;display:flex;flex-direction:column;gap:3px; }
+.hb-stat+.hb-stat{ border-left:1px solid rgba(255,255,255,.1);padding-left:.9rem; }
+.hb-stat-label{
+  font-size:9.5px;color:rgba(255,255,255,.45);
+  letter-spacing:.07em;text-transform:uppercase;
+}
+.hb-stat-val{
+  font-family:'Instrument Serif',serif;
+  font-size:1rem;color:#fff;letter-spacing:-.01em;
+}
+.hb-stat-val.inc{ color:#6ee7b7; }
+.hb-stat-val.out{ color:#fca5a5; }
+.hb-stat-val.net.pos{ color:#6ee7b7; }
+.hb-stat-val.net.neg{ color:#fca5a5; }
+
+/* ── Wallet horizontal scroll ── */
+.dash-wallets-scroll{
+  display:flex;gap:10px;
+  overflow-x:auto;padding-bottom:4px;
+  margin-bottom:1.2rem;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
+}
+.dash-wallets-scroll::-webkit-scrollbar{ display:none; }
+
+/* ── Wallet card (dark green) ── */
+.dash-wcard{
+  background:var(--dark-card);
+  border-radius:18px;
+  padding:.95rem 1.1rem;
+  min-width:148px;max-width:180px;
+  flex-shrink:0;
+  box-shadow:0 6px 18px rgba(26,59,47,.28);
+  position:relative;overflow:hidden;
+  cursor:pointer;
+  transition:transform .22s var(--ease-bounce,cubic-bezier(.34,1.56,.64,1)),
+             box-shadow .22s;
+}
+.dash-wcard:hover{ transform:translateY(-3px);box-shadow:0 12px 28px rgba(26,59,47,.38); }
+.dash-wcard::before{
+  content:'';position:absolute;top:-25px;right:-25px;
+  width:90px;height:90px;border-radius:50%;
+  background:radial-gradient(circle,rgba(255,255,255,.07),transparent);
+  pointer-events:none;
+}
+.dash-wcard .dw-head{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:7px;
+}
+.dash-wcard .dw-name{
+  font-size:10.5px;color:rgba(255,255,255,.55);
+  letter-spacing:.04em;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;max-width:100px;
+}
+.dash-wcard .dw-dot{
+  width:6px;height:6px;border-radius:50%;
+  display:inline-block;flex-shrink:0;
+}
+.dash-wcard .dw-bal{
+  font-family:'Instrument Serif','Crimson Pro',serif;
+  font-size:1.15rem;color:#fff;letter-spacing:-.015em;line-height:1.15;
+}
+.dash-wcard .dw-type{
+  font-size:9px;color:rgba(255,255,255,.32);
+  text-transform:uppercase;letter-spacing:.08em;margin-top:3px;
+}
+.dash-wcard.debt{
+  background:linear-gradient(135deg,#7f1d1d,#991b1b);
+}
+.dash-wcard.add-new{
+  background:transparent;
+  border:2px dashed var(--border2);
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  gap:4px;color:var(--text3);
+  box-shadow:none;min-height:98px;
+}
+.dash-wcard.add-new:hover{
+  border-color:var(--accent);color:var(--accent);
+  transform:translateY(-2px);
+}
+
+/* ── Transaction list (dashboard) ── */
+.dash-tx-list{ display:flex;flex-direction:column;gap:6px;margin-bottom:1rem; }
+.tx-list-item{
+  display:flex;align-items:center;gap:12px;
+  padding:.75rem 1rem;
+  background:#fff;border-radius:14px;
+  border:1px solid var(--border);
+  cursor:pointer;
+  transition:transform .15s,box-shadow .15s;
+}
+.tx-list-item:hover{ transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.07); }
+body.dark .tx-list-item{ background:var(--bg2);border-color:var(--border); }
+.txi-icon{
+  width:40px;height:40px;border-radius:12px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.1rem;flex-shrink:0;
+}
+.txi-icon.in { background:#DCFCE7;color:#059669; }
+.txi-icon.out{ background:#FEE2E2;color:#DC2626; }
+.txi-icon.tr { background:#DBEAFE;color:#0284C7; }
+body.dark .txi-icon.in { background:#0e2a1e;color:#2dd98f; }
+body.dark .txi-icon.out{ background:#2a100e;color:#f0605a; }
+body.dark .txi-icon.tr { background:#0e1e2a;color:#5a9ef0; }
+.txi-main{ flex:1;min-width:0; }
+.txi-title{
+  font-size:12.5px;font-weight:500;color:var(--text);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.txi-sub{ font-size:10.5px;color:var(--text3);margin-top:1px; }
+.txi-amount{
+  font-family:'Instrument Serif',serif;
+  font-size:1rem;flex-shrink:0;
+}
+.txi-amount.in { color:#059669; }
+.txi-amount.out{ color:#DC2626; }
+.txi-amount.tr { color:#0284C7; }
+body.dark .txi-amount.in { color:#2dd98f; }
+body.dark .txi-amount.out{ color:#f0605a; }
+body.dark .txi-amount.tr { color:#5a9ef0; }
+
+/* ── Sidebar stays dark green — just refine ── */
+.sidebar{
+  background:linear-gradient(175deg,#132B22 0%,#1A3B2F 50%,#1F4438 100%) !important;
+}
+.nb.active{
+  background:linear-gradient(90deg,rgba(249,115,22,.3),rgba(249,115,22,.12)) !important;
+  color:#FED7AA !important;
+}
+
+/* ── Dashboard page warmth tweak ── */
+#page-dash .hero-greet{
+  background:linear-gradient(135deg,#FFF4EC 0%,#FFE8D0 55%,#FDD5A8 100%) !important;
+  border-color:#FDB87E !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════ */
+
 </style>
 </head>
 <body>
@@ -1697,17 +1918,15 @@ body[data-fs="lg"]{ font-size:14.5px; }
   <div class="pt" style="display:none">Dashboard</div>
   <div class="ps" style="display:none">Ringkasan keuangan keluarga hari ini</div>
   <div id="dash-budget-alert" style="display:none;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:.7rem 1rem;margin-bottom:1rem;font-size:12.5px;color:#dc2626;cursor:pointer" onclick="goPage('budget')"></div>
-  <div class="cg" id="dash-cards"></div>
+  <!-- HERO BALANCE CARD -->
+  <div id="dash-cards"></div>
+  <!-- WALLET SCROLL -->
+  <div id="dash-wallets" class="dash-wallets-scroll"></div>
   <!-- FINANCIAL HEALTH SCORE -->
   <div id="dash-health" style="margin-bottom:1.3rem"></div>
   <div id="dash-nwtarget-bar" style="display:none;margin-bottom:1.2rem"></div>
-  <div class="sh"><span class="st">Saldo per Kantong</span><button class="bs" onclick="goPage('wallets')">+ Kantong</button></div>
-  <div class="wg" id="dash-wallets"></div>
-  <div class="sh"><span class="st">Transaksi Terakhir</span><button class="bs" onclick="goPage('hist')">Lihat semua</button></div>
-  <div class="tw" style="overflow-x:auto"><table>
-    <thead><tr><th>Tanggal</th><th>Kantong</th><th>Tipe</th><th>Kategori</th><th>Keterangan</th><th style="text-align:right">Nominal</th></tr></thead>
-    <tbody id="dash-rows"></tbody>
-  </table></div>
+  <div class="sh"><span class="st">Transaksi Terakhir</span><button class="bs" onclick="goPage('hist')">Lihat semua →</button></div>
+  <div class="dash-tx-list" id="dash-rows"></div>
 </div>
 
 <!-- INPUT -->
@@ -2970,11 +3189,10 @@ function moneyVal(id) {
 
 // Phase 3: Skeleton loader helper — call before async data ready, remove on render
 function showSkeletons() {
-  const skel = `<div class="skel" style="height:54px"></div>`;
   const cg = document.getElementById('dash-cards');
-  if (cg && !cg.children.length) cg.innerHTML = Array(4).fill(skel).join('');
+  if (cg && !cg.children.length) cg.innerHTML = `<div class="skel" style="height:154px;border-radius:24px"></div>`;
   const wg = document.getElementById('dash-wallets');
-  if (wg && !wg.children.length) wg.innerHTML = Array(3).fill(`<div class="skel" style="height:92px;border-radius:var(--rl)"></div>`).join('');
+  if (wg && !wg.children.length) wg.innerHTML = Array(3).fill(`<div class="skel" style="height:98px;border-radius:18px;min-width:148px;flex-shrink:0"></div>`).join('');
 }
 
 function save() {
@@ -3093,30 +3311,82 @@ function _renderDashBase() {
     if (tx.type==='in') mIn += +tx.amount;
     if (tx.type==='out') mOut += +tx.amount;
   });
+  const net = mIn - mOut;
+  const netCls = net >= 0 ? 'pos' : 'neg';
+
+  // ── Hero balance card (dark green, Stitch-style)
   document.getElementById('dash-cards').innerHTML = `
-    <div class="card ac"><div class="cl">Net Worth</div><div class="cv">${rpS(nw)}</div><div class="cs">${wallets.length} kantong</div></div>
-    <div class="card g"><div class="cl">Pemasukan Bulan Ini</div><div class="cv">${rpS(mIn)}</div><div class="cs">${m}</div></div>
-    <div class="card r"><div class="cl">Pengeluaran Bulan Ini</div><div class="cv">${rpS(mOut)}</div><div class="cs">${m}</div></div>
-    <div class="card ${mIn-mOut>=0?'g':'r'}"><div class="cl">Selisih Bulan Ini</div><div class="cv">${rpS(mIn-mOut)}</div><div class="cs">pemasukan − pengeluaran</div></div>
+    <div class="hero-balance">
+      <div class="hb-inner">
+        <div class="hb-label">Total Kekayaan Bersih</div>
+        <div class="hb-amount">${rpS(nw)}</div>
+        <div class="hb-stats">
+          <div class="hb-stat">
+            <div class="hb-stat-label">↑ Pemasukan</div>
+            <div class="hb-stat-val inc">${rpS(mIn)}</div>
+          </div>
+          <div class="hb-stat">
+            <div class="hb-stat-label">↓ Pengeluaran</div>
+            <div class="hb-stat-val out">${rpS(mOut)}</div>
+          </div>
+          <div class="hb-stat">
+            <div class="hb-stat-label">⇄ Selisih</div>
+            <div class="hb-stat-val net ${netCls}">${net>=0?'+':''}${rpS(net)}</div>
+          </div>
+        </div>
+      </div>
+    </div>
   `;
-  document.getElementById('dash-wallets').innerHTML = wallets.length === 0
-    ? `<p style="color:var(--text3);font-size:12.5px">Belum ada kantong. <a href="#" onclick="goPage('wallets');return false" style="color:var(--accent)">Tambah →</a></p>`
+
+  // ── Wallet horizontal scroll cards
+  const walletCards = wallets.length === 0
+    ? `<div class="dash-wcard add-new" onclick="goPage('wallets')"><span style="font-size:1.6rem">＋</span><span style="font-size:11px">Tambah Kantong</span></div>`
     : wallets.map(w => {
-        const b   = walletBal(w.id);
+        const b = walletBal(w.id);
         const isDebt = w.wtype === 'hutang';
-        const dispB  = isDebt ? -b : b;   // show debt as negative
-        const clr    = isDebt ? 'var(--red)' : (b < 0 ? 'var(--red)' : 'var(--text)');
-        const badge  = isDebt ? `<span style="font-size:9px;background:#fee2e2;color:var(--red);border-radius:4px;padding:1px 5px;margin-left:4px;font-weight:600">HUTANG</span>` : '';
-        return `<div class="wcard">
-          <div class="wn"><span>${w.name}${badge}</span><span class="dot" style="background:${w.color}"></span></div>
-          <div class="wb" style="color:${clr}">${isDebt ? '− ' : ''}${rp(b)}</div>
-          <div class="wo">${w.owner} · ${w.wtype}</div>
+        const dispB = isDebt ? -Math.abs(b) : b;
+        const debtCls = isDebt ? ' debt' : '';
+        const debtBadge = isDebt ? `<span style="font-size:8px;background:rgba(255,255,255,.15);color:#fca5a5;border-radius:3px;padding:1px 5px;letter-spacing:.04em">HUTANG</span>` : '';
+        return `<div class="dash-wcard${debtCls}" onclick="goPage('wallets')">
+          <div class="dw-head">
+            <div class="dw-name">${w.name}</div>
+            <div class="dw-dot" style="background:${w.color}"></div>
+          </div>
+          <div class="dw-bal">${isDebt ? '−' : ''}${rp(Math.abs(b))}</div>
+          <div class="dw-type">${w.wtype}${debtBadge?'&nbsp;':''}</div>
         </div>`;
-      }).join('');
+      }).join('') +
+      `<div class="dash-wcard add-new" onclick="goPage('wallets')"><span style="font-size:1.4rem">＋</span><span style="font-size:10.5px">Kantong baru</span></div>`;
+  document.getElementById('dash-wallets').innerHTML = walletCards;
+
+  // ── Transaction list (card style, not table)
   const recent = [...transactions].sort((a,b)=>b.date.localeCompare(a.date)||b.cAt-a.cAt).slice(0,8);
   document.getElementById('dash-rows').innerHTML = recent.length === 0
-    ? `<tr><td colspan="6" class="empty">Belum ada transaksi</td></tr>`
-    : recent.map(tx => txRow(tx, false)).join('');
+    ? `<div class="tx-list-item" style="justify-content:center;color:var(--text3);font-size:12.5px;border-style:dashed">Belum ada transaksi</div>`
+    : recent.map(tx => txDashCard(tx)).join('');
+}
+
+// ─── DASHBOARD TRANSACTION CARD ───────────────────────────────────────────────
+function txDashCard(tx) {
+  const catIcons = {
+    'Makan & Minum':'🍽️','Transportasi':'🚗','Belanja':'🛍️','Hiburan':'🎬','Kesehatan':'💊',
+    'Pendidikan':'📚','Tagihan':'💡','Tabungan':'💰','Gaji':'💼','Investasi':'📈',
+    'Transfer':'💸','Lainnya':'📋'
+  };
+  const icon = catIcons[tx.cat] || (tx.type==='in'?'💰':tx.type==='out'?'💳':'💸');
+  const typeCls = tx.type==='in'?'in':tx.type==='out'?'out':'tr';
+  const sgn = tx.type==='in'?'+':tx.type==='out'?'−':'⇄';
+  const wallet = tx.type==='transfer'
+    ? `${tx.walletFrom||''}→${tx.walletTo||''}`
+    : (wallets.find(w=>w.id===tx.walletId)||{name:tx.walletId||'—'}).name;
+  return `<div class="tx-list-item" onclick="openEditTx('${tx.id}')">
+    <div class="txi-icon ${typeCls}">${icon}</div>
+    <div class="txi-main">
+      <div class="txi-title">${tx.note||tx.cat||'Transaksi'}</div>
+      <div class="txi-sub">${displayDate(tx.date)} · ${wallet||'—'}</div>
+    </div>
+    <div class="txi-amount ${typeCls}">${sgn} ${rp(tx.amount)}</div>
+  </div>`;
 }
 
 // ─── DATE HELPERS ────────────────────────────────────────────────────────────
@@ -6821,10 +7091,10 @@ document.addEventListener('keydown', (e)=>{
   }
 })();
 
-// Tag hist rows with data-tx-id so swipe can target them
+// Tag hist rows with data-tx-id so swipe can target them (hist only — dash-rows is now card list)
 (function patchTxRendering(){
   const tagRows = () => {
-    ['hist-rows','dash-rows'].forEach(id => {
+    ['hist-rows'].forEach(id => {
       const tbody = document.getElementById(id);
       if (!tbody) return;
       tbody.querySelectorAll('tr').forEach(tr => {
@@ -6848,18 +7118,8 @@ document.addEventListener('keydown', (e)=>{
   setTimeout(tagRows, 200);
 })();
 
-// ─── Dash swipe hint (mobile) ─────────────────────────────────────────
-(function addSwipeHint(){
-  const dashRows = document.getElementById('dash-rows');
-  if (!dashRows) return;
-  const tw = dashRows.closest('.tw');
-  if (!tw || document.getElementById('swipe-hint-dash')) return;
-  const hint = document.createElement('div');
-  hint.id = 'swipe-hint-dash';
-  hint.className = 'swipe-hint';
-  hint.innerHTML = '← Geser transaksi ke kiri untuk Edit atau Hapus';
-  tw.parentNode.insertBefore(hint, tw);
-})();
+// ─── Dash swipe hint (mobile) — disabled for card list layout ─────────────
+// (swipe hint only applies to table rows in hist page)
 
 console.log('[V17] Enhancement layer loaded — ⌘K command palette ready');
 
