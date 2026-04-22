@@ -287,7 +287,7 @@ body.dark .fab-ocr-sub{background:var(--bg2);}
 .nb.active::before{content:'';position:absolute;left:-4px;top:22%;bottom:22%;width:3px;background:#fb923c;border-radius:2px;box-shadow:0 0 10px rgba(251,146,60,.6);}
 
 /* WALLET TYPE TILES — Phase 4 */
-.wtype-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
+.wtype-tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
 .wtype-tile{background:var(--bg3);border:1.5px solid var(--border);border-radius:8px;padding:9px 4px;cursor:pointer;font-family:'Sora',sans-serif;font-size:11px;color:var(--text2);display:flex;flex-direction:column;align-items:center;gap:3px;transition:all .15s;}
 .wtype-tile span:first-child{font-size:1.15rem;line-height:1;}
 .wtype-tile:hover{border-color:var(--accent);color:var(--accent);}
@@ -1138,14 +1138,15 @@ body[data-fs="lg"]{ font-size:14.5px; }
 }
 .hs-ring-wrap svg{ width:88px; height:88px; }
 .hs-num{
-  position:absolute; inset:0; display:flex; flex-direction:column;
-  align-items:center; justify-content:center;
-  font-family:'Instrument Serif',serif; font-size:1.5rem; line-height:1;
+  position:absolute; inset:0; display:flex; flex-direction:row;
+  align-items:center; justify-content:center; gap:1px;
+  font-family:'Instrument Serif',serif; font-size:1.2rem; line-height:1;
+  white-space:nowrap;
 }
-.hs-num .hs-grade{
-  font-size:10px; font-weight:700; letter-spacing:.08em;
-  text-transform:uppercase; margin-top:1px;
+.hs-num .hs-pct{
+  font-size:.65em; font-weight:700; margin-top:2px; opacity:.85;
 }
+.hs-num .hs-grade{ display:none; }
 .hs-info{ min-width:0; }
 .hs-title{
   font-size:10px; letter-spacing:.1em; font-weight:700;
@@ -2145,7 +2146,8 @@ body.dark .txi-amount.tr { color:#5a9ef0; }
           <button type="button" class="wtype-tile" data-type="bank" onclick="wfPickType('bank')"><span>🏦</span><span>Bank</span></button>
           <button type="button" class="wtype-tile" data-type="invest" onclick="wfPickType('invest')"><span>📈</span><span>Invest</span></button>
           <button type="button" class="wtype-tile" data-type="darurat" onclick="wfPickType('darurat')"><span>🚨</span><span>Darurat</span></button>
-          <button type="button" class="wtype-tile" data-type="hutang" onclick="wfPickType('hutang')"><span>💳</span><span>Hutang</span></button>
+          <button type="button" class="wtype-tile" data-type="hutang" onclick="wfPickType('hutang')"><span>💸</span><span>Hutang</span></button>
+          <button type="button" class="wtype-tile" data-type="kredit" onclick="wfPickType('kredit')"><span>💳</span><span>Kartu Kredit</span></button>
           <button type="button" class="wtype-tile" data-type="lain" onclick="wfPickType('lain')"><span>📦</span><span>Lain</span></button>
         </div>
         <input type="hidden" id="wf-type" value="kas">
@@ -3220,11 +3222,15 @@ function walletBal(wid, upTo=null) {
   }
   return b;
 }
-// hutang wallets are liabilities — subtracted from net worth, not added
+// Liability wallet types — balances are subtracted from net worth
+const DEBT_WTYPES = new Set(['hutang','kredit']);
+function isDebtWallet(w){ return DEBT_WTYPES.has((w.wtype||'').toLowerCase()); }
+
+// hutang & kartu kredit wallets are liabilities — subtracted from net worth
 function totalNW(upTo=null) {
   return wallets.reduce((s,w) => {
     const b = walletBal(w.id, upTo);
-    return s + (w.wtype === 'hutang' ? -b : b);
+    return s + (isDebtWallet(w) ? -Math.abs(b) : b);
   }, 0);
 }
 
@@ -3343,10 +3349,10 @@ function _renderDashBase() {
     ? `<div class="dash-wcard add-new" onclick="goPage('wallets')"><span style="font-size:1.6rem">＋</span><span style="font-size:11px">Tambah Kantong</span></div>`
     : wallets.map(w => {
         const b = walletBal(w.id);
-        const isDebt = w.wtype === 'hutang';
-        const dispB = isDebt ? -Math.abs(b) : b;
+        const isDebt = isDebtWallet(w);
         const debtCls = isDebt ? ' debt' : '';
-        const debtBadge = isDebt ? `<span style="font-size:8px;background:rgba(255,255,255,.15);color:#fca5a5;border-radius:3px;padding:1px 5px;letter-spacing:.04em">HUTANG</span>` : '';
+        const debtLabel = w.wtype === 'kredit' ? 'KARTU KREDIT' : 'HUTANG';
+        const debtBadge = isDebt ? `<span style="font-size:8px;background:rgba(255,255,255,.15);color:#fca5a5;border-radius:3px;padding:1px 5px;letter-spacing:.04em">${debtLabel}</span>` : '';
         return `<div class="dash-wcard${debtCls}" onclick="goPage('wallets')">
           <div class="dw-head">
             <div class="dw-name">${w.name}</div>
@@ -3744,16 +3750,17 @@ function renderWallets() {
     ? emptyStateHTML('wallets')
     : wallets.map(w=>{
         const b=walletBal(w.id);
-        const isDebt = w.wtype === 'hutang';
+        const isDebt = isDebtWallet(w);
         const dispClr = isDebt ? 'var(--red)' : (b<0?'var(--red)':'var(--text)');
-        const debtBadge = isDebt ? `<span style="font-size:9px;background:#fee2e2;color:var(--red);border-radius:4px;padding:1px 5px;font-weight:600;flex-shrink:0">HUTANG</span>` : '';
+        const debtLabelTxt = w.wtype==='kredit' ? 'KARTU KREDIT' : 'HUTANG';
+        const debtBadge = isDebt ? `<span style="font-size:9px;background:#fee2e2;color:var(--red);border-radius:4px;padding:1px 5px;font-weight:600;flex-shrink:0">${debtLabelTxt}</span>` : '';
         const logoHtml = walletLogoHTML(w, 22);
         return`<div class="wcard">
           <div class="wn">
             <span style="display:flex;align-items:center;gap:6px;min-width:0;flex:1">${logoHtml}<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${w.name}</span>${debtBadge}</span>
             <span class="dot" style="background:${w.color}"></span>
           </div>
-          <div class="wb" style="color:${dispClr}">${isDebt?'− ':''}${rp(b)}</div>
+          <div class="wb" style="color:${dispClr}">${isDebt?'− ':''}${rp(Math.abs(b))}</div>
           <div class="wo">${w.owner} · ${w.wtype}${w.currency && w.currency!=='IDR' ? ' · '+w.currency : ''}</div>
           <div class="wa">
             <button class="xbtn" onclick="editWallet('${w.id}')">Edit</button>
@@ -6071,7 +6078,7 @@ ${pct>30?`
   }
 
   if (/hutang|lunas|cicil/.test(ql)) {
-    const hutangWallets = wallets.filter(w=>w.wtype==='hutang');
+    const hutangWallets = wallets.filter(w=>isDebtWallet(w));
     if (!hutangWallets.length && !recurringList.some(r=>/hutang|cicil/i.test(r.name))) {
       return '✅ Tidak ada kantong atau transaksi rutin bertipe hutang. Bagus!';
     }
@@ -7420,7 +7427,7 @@ function calcHealthScore() {
   if (efMo < 3 && avgOut > 0) insights.push(`Dana darurat ±${efMo.toFixed(1)} bln — idealnya 3–6 bln.`);
 
   // 5. Debt Health (10 pts)
-  const hasDebt = wallets.some(w => (w.wtype||'').toLowerCase().includes('hutang') && walletBal(w.id) < -10000);
+  const hasDebt = wallets.some(w => isDebtWallet(w) && walletBal(w.id) < -10000);
   score += hasDebt ? 4 : 10;
   if (hasDebt) insights.push('Ada kantong hutang aktif — pertimbangkan pelunasan rutin.');
 
@@ -7458,8 +7465,7 @@ function renderHealthScore() {
             style="transition:stroke-dasharray .8s cubic-bezier(.4,0,.2,1)"/>
         </svg>
         <div class="hs-num" style="color:${hs.color}">
-          ${hs.score}
-          <span class="hs-grade">${hs.grade}</span>
+          ${hs.score}<span class="hs-pct">%</span>
         </div>
       </div>
       <div class="hs-info">
