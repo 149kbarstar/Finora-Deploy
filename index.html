@@ -3273,7 +3273,8 @@ function refreshOwnerSelect() {
   const sel = document.getElementById('wf-owner');
   if (!sel) return;
   // Build owner list: saved display name + unique owners from existing wallets + "Bersama"
-  const displayName = LS.get('kk2_display_name') || firebase.auth().currentUser?.displayName || '';
+  // Prefer Firebase Auth displayName (always user-scoped) to avoid cross-user LS bleed
+  const displayName = firebase.auth().currentUser?.displayName || LS.get('kk2_display_name') || '';
   const existingOwners = [...new Set(wallets.map(w => w.owner || '').filter(o => o && o !== 'Bersama'))];
   const owners = [...new Set([displayName, ...existingOwners].filter(Boolean))];
   if (!owners.length) owners.push('Saya');
@@ -8707,7 +8708,8 @@ function openProfile() {
   const user = firebase.auth().currentUser;
   if (!user) return;
 
-  const savedName = LS.get('kk2_display_name') || user.displayName || user.email?.split('@')[0] || 'User';
+  // Prefer Firebase Auth displayName (always user-scoped) over the LS cache
+  const savedName = user.displayName || LS.get('kk2_display_name') || user.email?.split('@')[0] || 'User';
   const initials  = savedName.split(' ').slice(0,2).map(w => w[0]?.toUpperCase() || '').join('') || '?';
 
   const el = id => document.getElementById(id);
@@ -8918,6 +8920,7 @@ async function logout() {
     'kk2_wallets','kk2_txs','kk2_budgets','kk2_cats',
     'kk2_recurring','kk2_sinking','kk2_nwtarget','kk2_last_save',
     'kk2_onboarded','kk2_pending_queue','kk2_notifs','kk2_rec_auto_month',
+    'kk2_display_name','kk2_alerted','kk2_active_uid',
   ].forEach(k => localStorage.removeItem(k));
 
   // 4. Sign out
@@ -8974,6 +8977,23 @@ function _updateUserStrip(user) {
 // Loads all user data from users/{uid} and starts the realtime listener.
 // This is the single entry-point for bootstrapping a logged-in session.
 async function loadUserData(uid) {
+  // 0. Evict stale localStorage cache if a DIFFERENT user was previously cached.
+  //    Without this, User B sees User A's wallets/name until Firebase loads.
+  const _cachedUid = localStorage.getItem('kk2_active_uid');
+  if (_cachedUid && _cachedUid !== uid) {
+    [
+      'kk2_wallets','kk2_txs','kk2_budgets','kk2_cats',
+      'kk2_recurring','kk2_sinking','kk2_nwtarget','kk2_last_save',
+      'kk2_onboarded','kk2_pending_queue','kk2_notifs','kk2_display_name',
+      'kk2_alerted','kk2_rec_auto_month',
+    ].forEach(k => localStorage.removeItem(k));
+    // Reset in-memory state so no stale data is shown even for a frame
+    wallets = []; transactions = []; budgets = []; customCats = [];
+    recurringList = []; sinkingList = []; nwTarget = null;
+    console.log('[Auth] Different user detected — cache evicted for', uid);
+  }
+  localStorage.setItem('kk2_active_uid', uid);
+
   // 1. Store UID globally — all DB writes must check this before proceeding
   _currentUserId  = uid;
   window.currentUID = uid;   // public alias (console / devtools / extensions)
