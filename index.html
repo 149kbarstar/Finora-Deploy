@@ -3016,6 +3016,17 @@ const LS = {
   set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e) { console.warn('storage error', e); } }
 };
 
+// ─── SECURITY: HTML SANITIZER ────────────────────────────────────────────────
+// Strips dangerous tags and event attributes before inserting user content as HTML.
+// Use for: tx.note, w.name, w.owner, category names — any user-provided text in innerHTML.
+function sanitizeHTML(str) {
+  if (str === null || str === undefined) return '';
+  // Escape to a text node first, then return the escaped HTML string
+  const div = document.createElement('div');
+  div.appendChild(document.createTextNode(String(str)));
+  return div.innerHTML;
+}
+
 // ─── STATE ──────────────────────────────────────────────────────────────────
 let wallets      = LS.get('kk2_wallets') || [];
 let transactions = [];   // source of truth: Firebase _fbTxRef listener (never LS)
@@ -3355,7 +3366,7 @@ function _renderDashBase() {
         const debtBadge = isDebt ? `<span style="font-size:8px;background:rgba(255,255,255,.15);color:#fca5a5;border-radius:3px;padding:1px 5px;letter-spacing:.04em">${debtLabel}</span>` : '';
         return `<div class="dash-wcard${debtCls}" onclick="goPage('wallets')">
           <div class="dw-head">
-            <div class="dw-name">${w.name}</div>
+            <div class="dw-name">${sanitizeHTML(w.name)}</div>
             <div class="dw-dot" style="background:${w.color}"></div>
           </div>
           <div class="dw-bal">${isDebt ? '−' : ''}${rp(Math.abs(b))}</div>
@@ -3388,8 +3399,8 @@ function txDashCard(tx) {
   return `<div class="tx-list-item" onclick="openEditTx('${tx.id}')">
     <div class="txi-icon ${typeCls}">${icon}</div>
     <div class="txi-main">
-      <div class="txi-title">${tx.note||tx.cat||'Transaksi'}</div>
-      <div class="txi-sub">${displayDate(tx.date)} · ${wallet||'—'}</div>
+      <div class="txi-title">${sanitizeHTML(tx.note||tx.cat||'Transaksi')}</div>
+      <div class="txi-sub">${displayDate(tx.date)} · ${sanitizeHTML(wallet||'—')}</div>
     </div>
     <div class="txi-amount ${typeCls}">${sgn} ${rp(tx.amount)}</div>
   </div>`;
@@ -3423,10 +3434,10 @@ function txRow(tx, showActions=true) {
   const sgn = tx.type==='in'?'+':tx.type==='out'?'−':'⇄';
   return `<tr>
     <td style="font-size:11px;font-family:monospace">${displayDate(tx.date)}</td>
-    <td>${txWalletDisplay(tx)}</td>
+    <td>${sanitizeHTML(txWalletDisplay(tx))}</td>
     <td>${pill}</td>
-    <td>${tx.cat||'—'}</td>
-    <td style="color:var(--text2);max-width:150px;overflow:hidden;text-overflow:ellipsis">${tx.note||'—'}</td>
+    <td>${sanitizeHTML(tx.cat||'—')}</td>
+    <td style="color:var(--text2);max-width:150px;overflow:hidden;text-overflow:ellipsis">${sanitizeHTML(tx.note||'—')}</td>
     <td style="text-align:right;color:${col};font-weight:500">${sgn} ${rp(tx.amount)}</td>
     ${showActions?`<td style="white-space:nowrap"><button class="xbtn" onclick="openEditTx('${tx.id}')" style="margin-right:3px">✎</button><button class="xbtn del" onclick="askDelTx('${tx.id}')">✕</button></td>`:''}
   </tr>`;
@@ -3501,6 +3512,10 @@ function saveTx() {
   const note = document.getElementById('f-note').value.trim();
   if (!date) { toast('Tanggal tidak valid — gunakan format DD/MM/YYYY','err'); return; }
   if (!amount || amount <= 0) { toast('Nominal harus > 0','err'); return; }
+  // C4: payload size checks
+  if (amount > 999999999999) { toast('Nominal terlalu besar (maks 999.999.999.999)','err'); return; }
+  if (note.length > 500) { toast('Catatan maksimal 500 karakter','err'); return; }
+  if (cat && cat.length > 100) { toast('Kategori terlalu panjang (maks 100 karakter)','err'); return; }
   if (_todayTxCount >= _TX_DAILY_LIMIT) {
     toast('Batas ' + _TX_DAILY_LIMIT + ' transaksi/hari tercapai. Coba lagi besok.', 'err'); return;
   }
@@ -3757,11 +3772,11 @@ function renderWallets() {
         const logoHtml = walletLogoHTML(w, 22);
         return`<div class="wcard">
           <div class="wn">
-            <span style="display:flex;align-items:center;gap:6px;min-width:0;flex:1">${logoHtml}<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${w.name}</span>${debtBadge}</span>
+            <span style="display:flex;align-items:center;gap:6px;min-width:0;flex:1">${logoHtml}<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${sanitizeHTML(w.name)}</span>${debtBadge}</span>
             <span class="dot" style="background:${w.color}"></span>
           </div>
           <div class="wb" style="color:${dispClr}">${isDebt?'− ':''}${rp(Math.abs(b))}</div>
-          <div class="wo">${w.owner} · ${w.wtype}${w.currency && w.currency!=='IDR' ? ' · '+w.currency : ''}</div>
+          <div class="wo">${sanitizeHTML(w.owner)} · ${sanitizeHTML(w.wtype)}${w.currency && w.currency!=='IDR' ? ' · '+sanitizeHTML(w.currency) : ''}</div>
           <div class="wa">
             <button class="xbtn" onclick="editWallet('${w.id}')">Edit</button>
             <button class="xbtn del" onclick="askDelWallet('${w.id}')">Hapus</button>
@@ -3783,6 +3798,10 @@ function saveWallet() {
   const bankId = document.getElementById('wf-bankid')?.value || '';
   const currency = balCur;  // wallet's native currency = what initial balance was entered in
   if (!name) { toast('Nama kantong wajib diisi','err'); return; }
+  // C4: payload size checks
+  if (name.length > 100) { toast('Nama kantong maksimal 100 karakter','err'); return; }
+  if (owner && owner.length > 100) { toast('Nama pemilik maksimal 100 karakter','err'); return; }
+  if (bal > 999999999999) { toast('Saldo awal terlalu besar (maks 999.999.999.999)','err'); return; }
   const balNote = (balCur !== 'IDR' && rawBal > 0)
     ? ('Saldo awal: ' + rawBal + ' ' + balCur + ' = ' + rp(bal))
     : ('Saldo awal kantong: ' + name);
@@ -7645,16 +7664,35 @@ let _obStep = 1;
 const _OB_STEPS = 3;
 
 function _showOnboarding() {
+  // Determine whether user already has a display name (returning user)
+  const existingName = LS.get('kk2_display_name') ||
+    (firebase.auth().currentUser?.displayName) || '';
+  const isFirstLogin = !existingName;
+
+  // Hide the name-input step and shrink dot count for returning users
+  const s1 = document.getElementById('ob-s1');
+  const nameSectionInS1 = s1 ? s1.querySelector('div[style*="margin:1rem"]') : null;
+  const nameDesc = s1 ? s1.querySelector('.ob-desc') : null;
+  if (!isFirstLogin) {
+    // Hide name input row; update description to skip-friendly text
+    if (nameSectionInS1) nameSectionInS1.style.display = 'none';
+    if (nameDesc) nameDesc.textContent = 'Selamat datang kembali! Berikut fitur-fitur unggulan Finora V.1.';
+  } else {
+    if (nameSectionInS1) nameSectionInS1.style.display = '';
+    if (nameDesc) nameDesc.textContent = 'Siapa nama kamu? Ini akan digunakan sebagai nama pemilik kantong.';
+  }
+
   document.getElementById('ob-ov').classList.add('open');
   _obRender(1);
-  // Pre-fill username from Firebase auth display name or saved LS key
-  const inp = document.getElementById('ob-username');
-  if (inp) {
-    const saved = LS.get('kk2_display_name') ||
-      (firebase.auth().currentUser?.displayName) || '';
-    inp.value = saved;
-    inp.style.borderColor = saved ? 'var(--accent)' : 'var(--border2)';
-    setTimeout(() => inp.focus(), 350);
+
+  // Only focus name input on first login
+  if (isFirstLogin) {
+    const inp = document.getElementById('ob-username');
+    if (inp) {
+      inp.value = '';
+      inp.style.borderColor = 'var(--border2)';
+      setTimeout(() => inp.focus(), 350);
+    }
   }
 }
 
@@ -7682,18 +7720,23 @@ function _obRender(step) {
 }
 
 function obNext() {
-  // Step 1 → save username before advancing
+  // Step 1 → save username only if it's a first-login (name input visible)
   if (_obStep === 1) {
-    const name = (document.getElementById('ob-username')?.value || '').trim();
-    if (!name) {
-      const inp = document.getElementById('ob-username');
-      if (inp) { inp.style.borderColor = '#dc2626'; inp.focus(); }
-      return;
+    const existingName = LS.get('kk2_display_name') ||
+      (firebase.auth().currentUser?.displayName) || '';
+    const isFirstLogin = !existingName;
+    if (isFirstLogin) {
+      const name = (document.getElementById('ob-username')?.value || '').trim();
+      if (!name) {
+        const inp = document.getElementById('ob-username');
+        if (inp) { inp.style.borderColor = '#dc2626'; inp.focus(); }
+        return;
+      }
+      LS.set('kk2_display_name', name);
+      // Update sidebar name display if already rendered
+      const nameEl = document.getElementById('auth-user-name');
+      if (nameEl && nameEl.textContent === '—') nameEl.textContent = name;
     }
-    LS.set('kk2_display_name', name);
-    // Update sidebar name display if already rendered
-    const nameEl = document.getElementById('auth-user-name');
-    if (nameEl && nameEl.textContent === '—') nameEl.textContent = name;
   }
   if (_obStep < _OB_STEPS) _obRender(_obStep + 1);
   else closeOnboarding(false);
@@ -7702,10 +7745,13 @@ function obBack() {
   if (_obStep > 1) _obRender(_obStep - 1);
 }
 
-// Check if first run
+// Check if first run — only show wizard for truly new users
 (function checkOnboarding(){
   if (LS.get('kk2_onboarded')) return;
   if (wallets.length > 0) { LS.set('kk2_onboarded', true); return; }
+  const _chkName = LS.get('kk2_display_name') ||
+    (firebase.auth().currentUser?.displayName) || '';
+  if (_chkName) { LS.set('kk2_onboarded', true); return; } // returning user
   // slight delay so page renders first
   setTimeout(_showOnboarding, 900);
 })();
@@ -8468,6 +8514,38 @@ function _authErrMsg(code) {
   return map[code] || 'Terjadi kesalahan (' + (code || 'unknown') + '). Coba lagi.';
 }
 
+// ── Client-side auth rate limiter ─────────────────────────────────────────────
+// Track login/signup attempts in sessionStorage. Block after 5 per 15 minutes.
+const _AUTH_RATE = { max: 5, windowMs: 15 * 60 * 1000 };
+
+function _authRateCheck(errorElId) {
+  const now = Date.now();
+  let state;
+  try { state = JSON.parse(sessionStorage.getItem('_auth_rl') || 'null'); } catch(e) { state = null; }
+  if (!state || now - state.start > _AUTH_RATE.windowMs) {
+    state = { start: now, count: 0 };
+  }
+  state.count++;
+  sessionStorage.setItem('_auth_rl', JSON.stringify(state));
+
+  if (state.count > _AUTH_RATE.max) {
+    const remaining = Math.ceil((_AUTH_RATE.windowMs - (now - state.start)) / 1000);
+    const mins = Math.ceil(remaining / 60);
+    _showAuthError(errorElId,
+      `Terlalu banyak percobaan login. Coba lagi dalam ${mins} menit.`);
+    // Start countdown in the error element
+    let secs = remaining;
+    const el = document.getElementById(errorElId);
+    const _rlTimer = setInterval(() => {
+      secs--;
+      if (el) el.textContent = `Terlalu banyak percobaan login. Coba lagi dalam ${Math.ceil(secs/60)} menit (${secs}d).`;
+      if (secs <= 0) { clearInterval(_rlTimer); if (el) { el.textContent=''; el.classList.remove('show'); } }
+    }, 1000);
+    return false; // blocked
+  }
+  return true; // allowed
+}
+
 // ── Layer 2: Auth operations ──────────────────────────────────────────────────
 
 async function login() {
@@ -8477,6 +8555,7 @@ async function login() {
 
   if (!email)    { _showAuthError('login-error', 'Masukkan email kamu.'); return; }
   if (!password) { _showAuthError('login-error', 'Masukkan password kamu.'); return; }
+  if (!_authRateCheck('login-error')) return;
 
   _clearAuthErrors();
   _authSetBtnLoading('login-btn-txt', true, 'Masuk…');
@@ -8490,7 +8569,9 @@ async function login() {
     _updateUserStrip({ displayName: 'UAT Admin', email: 'admin@admin.com', providerData: [] });
     _hideAuthOverlay();
     _fbStartListening('uat-admin-uid');
-    if (!LS.get('kk2_onboarded') && wallets.length === 0) setTimeout(_showOnboarding, 1200);
+    const _uatHasName = LS.get('kk2_display_name') || 'UAT Admin';
+    if (!LS.get('kk2_onboarded') && wallets.length === 0 && !_uatHasName) setTimeout(_showOnboarding, 1200);
+    else if (!LS.get('kk2_onboarded')) LS.set('kk2_onboarded', true);
     return;
   }
   // ─────────────────────────────────────────────────────────────────────────────
@@ -8517,6 +8598,7 @@ async function signup() {
   if (!name)               { _showAuthError('signup-error', 'Masukkan nama kamu.'); return; }
   if (!email)              { _showAuthError('signup-error', 'Masukkan email kamu.'); return; }
   if (password.length < 6) { _showAuthError('signup-error', 'Password minimal 6 karakter.'); return; }
+  if (!_authRateCheck('signup-error')) return;
 
   _clearAuthErrors();
   _authSetBtnLoading('signup-btn-txt', true, 'Membuat akun…');
@@ -8880,9 +8962,16 @@ async function loadUserData(uid) {
   _fbStartListening(uid);
   _logAnalytics('session_start', { provider: firebase.auth().currentUser?.providerData?.[0]?.providerId });
 
-  // 5. Onboarding for brand-new accounts
-  if (!LS.get('kk2_onboarded') && wallets.length === 0) {
+  // 5. Onboarding for brand-new accounts only
+  // If user already has a display name set (Firebase or cached), they are a returning user.
+  // Only show the onboarding wizard on true first-login (no name, no wallets, not yet onboarded).
+  const _currentUser = firebase.auth().currentUser;
+  const _hasName = LS.get('kk2_display_name') || _currentUser?.displayName;
+  if (!LS.get('kk2_onboarded') && wallets.length === 0 && !_hasName) {
     setTimeout(_showOnboarding, 1200);
+  } else if (!LS.get('kk2_onboarded')) {
+    // Returning user that somehow cleared kk2_onboarded — mark as done and skip wizard
+    LS.set('kk2_onboarded', true);
   }
 }
 
