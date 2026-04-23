@@ -2250,7 +2250,7 @@ body.dark .txi-amount.tr { color:#5a9ef0; }
     </div>
     <div class="fr c2">
       <div class="fg"><label>Tipe</label>
-        <select id="rec-type"><option value="out">Pengeluaran</option><option value="in">Pemasukan</option><option value="transfer">Transfer</option></select>
+        <select id="rec-type" onchange="recTypeChange()"><option value="out">Pengeluaran</option><option value="in">Pemasukan</option><option value="transfer">Transfer</option></select>
       </div>
       <div class="fg"><label>Tanggal tiap bulan</label><input type="number" id="rec-day" placeholder="1–28" min="1" max="28"></div>
     </div>
@@ -5468,6 +5468,14 @@ function editRecurring(id) {
   document.getElementById('rec-single').style.display=r.type==='transfer'?'none':'grid';
   document.getElementById('rec-xfer').style.display=r.type==='transfer'?'grid':'none';
   document.getElementById('rec-wlbl').textContent=r.type==='in'?'Ke Kantong':'Dari Kantong';
+}
+
+function recTypeChange() {
+  const t = document.getElementById('rec-type').value;
+  const isXfer = t === 'transfer';
+  document.getElementById('rec-single').style.display = isXfer ? 'none' : 'grid';
+  document.getElementById('rec-xfer').style.display   = isXfer ? 'grid' : 'none';
+  document.getElementById('rec-wlbl').textContent = t === 'in' ? 'Ke Kantong' : 'Dari Kantong';
 }
 
 function cancelRecurring() {
