@@ -2166,7 +2166,7 @@ body.dark .txi-amount.tr { color:#5a9ef0; }
     </div>
   </div>
   <div class="sh"><span class="st">Kantong Aktif</span><span id="w-count" style="font-size:10.5px;color:var(--text3)"></span></div>
-  <div class="wg" id="w-list"></div>
+  <div class="tw" style="overflow-x:auto" id="w-list"></div>
 </div>
 
 <!-- BACKUP -->
@@ -3120,8 +3120,9 @@ const nowMonth = () => new Date().toISOString().slice(0, 7);
 
 function rp(n, sign=false) {
   n = +n;
+  if (n === 0) return sign ? '0' : 'Rp 0';
   const s = sign && n > 0 ? '+' : '';
-  return s + 'Rp ' + Math.abs(n).toLocaleString('id-ID', {minimumFractionDigits:2, maximumFractionDigits:2});
+  return s + 'Rp\u202F' + Math.abs(Math.round(n)).toLocaleString('id-ID');
 }
 function rpS(n) {
   n = Math.round(+n);
@@ -3761,28 +3762,48 @@ function walletLogoHTML(w, size) {
 
 function renderWallets() {
   document.getElementById('w-count').textContent = wallets.length + ' kantong';
-  document.getElementById('w-list').innerHTML = wallets.length===0
-    ? emptyStateHTML('wallets')
-    : wallets.map(w=>{
-        const b=walletBal(w.id);
-        const isDebt = isDebtWallet(w);
-        const dispClr = isDebt ? 'var(--red)' : (b<0?'var(--red)':'var(--text)');
-        const debtLabelTxt = w.wtype==='kredit' ? 'KARTU KREDIT' : 'HUTANG';
-        const debtBadge = isDebt ? `<span style="font-size:9px;background:#fee2e2;color:var(--red);border-radius:4px;padding:1px 5px;font-weight:600;flex-shrink:0">${debtLabelTxt}</span>` : '';
-        const logoHtml = walletLogoHTML(w, 22);
-        return`<div class="wcard">
-          <div class="wn">
-            <span style="display:flex;align-items:center;gap:6px;min-width:0;flex:1">${logoHtml}<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${sanitizeHTML(w.name)}</span>${debtBadge}</span>
-            <span class="dot" style="background:${w.color}"></span>
-          </div>
-          <div class="wb" style="color:${dispClr}">${isDebt?'− ':''}${rp(Math.abs(b))}</div>
-          <div class="wo">${sanitizeHTML(w.owner)} · ${sanitizeHTML(w.wtype)}${w.currency && w.currency!=='IDR' ? ' · '+sanitizeHTML(w.currency) : ''}</div>
-          <div class="wa">
-            <button class="xbtn" onclick="editWallet('${w.id}')">Edit</button>
-            <button class="xbtn del" onclick="askDelWallet('${w.id}')">Hapus</button>
-          </div>
-        </div>`;
-      }).join('');
+  if (wallets.length === 0) {
+    document.getElementById('w-list').innerHTML = emptyStateHTML('wallets');
+    refreshWalletSelects(); renderDash(); return;
+  }
+  const rows = wallets.map(w => {
+    const b = walletBal(w.id);
+    const isDebt = isDebtWallet(w);
+    const balClr = isDebt ? 'var(--red)' : (b < 0 ? 'var(--red)' : 'var(--green)');
+    const debtLabelTxt = w.wtype === 'kredit' ? 'KARTU KREDIT' : 'HUTANG';
+    const debtBadge = isDebt
+      ? `<span style="font-size:9px;background:#fee2e2;color:var(--red);border-radius:4px;padding:1px 5px;font-weight:600;margin-left:5px">${debtLabelTxt}</span>`
+      : '';
+    const logoHtml = walletLogoHTML(w, 20);
+    const dotHtml = `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${w.color};flex-shrink:0"></span>`;
+    const balStr = (isDebt ? '− ' : '') + rp(Math.abs(b));
+    const cur = w.currency && w.currency !== 'IDR' ? `<span class="fx-badge">${sanitizeHTML(w.currency)}</span>` : '';
+    return `<tr>
+      <td style="display:flex;align-items:center;gap:7px;min-width:0">
+        ${dotHtml}${logoHtml}
+        <span style="font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${sanitizeHTML(w.name)}</span>
+        ${debtBadge}${cur}
+      </td>
+      <td style="text-align:right;color:${balClr};font-weight:600;font-family:'Instrument Serif',serif;font-size:1.05rem">${balStr}</td>
+      <td style="color:var(--text3)">${sanitizeHTML(w.owner)}</td>
+      <td><span class="pill" style="background:var(--bg3);color:var(--text2)">${sanitizeHTML(w.wtype)}</span></td>
+      <td style="white-space:nowrap">
+        <button class="xbtn" onclick="editWallet('${w.id}')">✎ Edit</button>
+        <button class="xbtn del" onclick="askDelWallet('${w.id}')">✕ Hapus</button>
+      </td>
+    </tr>`;
+  }).join('');
+  document.getElementById('w-list').innerHTML = `
+    <table>
+      <thead><tr>
+        <th>Nama Kantong</th>
+        <th style="text-align:right">Saldo</th>
+        <th>Pemilik</th>
+        <th>Tipe</th>
+        <th></th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
   refreshWalletSelects(); renderDash();
 }
 
@@ -7258,8 +7279,11 @@ const MERCHANT_CAT = {
 
 const INCOME_CATS = new Set(['Gaji','Freelance','Bonus','THR','Investasi','Tabungan','Pendapatan']);
 const INCOME_KW   = new Set(['gaji','salary','bayaran','upah','freelance','bonus','thr','rapel',
-  'dividen','dividend','bunga','investasi','pendapatan','income','hasil','terima','dapat',
+  'dividen','dividend','bunga','pendapatan','income','hasil','terima','dapat',
   'uang masuk','transfer masuk']);
+// Explicit spend triggers — override income detection
+const SPEND_KW    = new Set(['keluar','bayar','beli','cicil','bayarkan','belanja','beli','setor',
+  'transfer keluar','kirim']);
 
 // ─── NATURAL LANGUAGE PARSER ─────────────────────────────────────────
 function parseNL(raw) {
@@ -7305,8 +7329,15 @@ function parseNL(raw) {
   }
 
   // 4. Detect type (income / expense)
+  // SPEND_KW wins unconditionally (e.g. "keluar", "bayar", "beli")
   let detectedType = 'out';
-  if (words.some(w => INCOME_KW.has(w))) detectedType = 'in';
+  const hasSpendKW = words.some(w => SPEND_KW.has(w)) || lower.includes('keluar');
+  if (!hasSpendKW && words.some(w => INCOME_KW.has(w))) detectedType = 'in';
+  // "investasi" context: "beli investasi" / "cicil investasi" → out, standalone → in
+  if (!hasSpendKW && lower.includes('investasi')) {
+    const spendCtx = /(?:beli|cicil|bayar|setor)\s+investasi|investasi\s+(?:beli|cicil)/i.test(lower);
+    detectedType = spendCtx ? 'out' : 'in';
+  }
 
   // 5. Match merchant → category (longest match first)
   let category = '';
