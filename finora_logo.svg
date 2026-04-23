@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0D2218"/>
+      <stop offset="50%" stop-color="#1A3B2F"/>
+      <stop offset="100%" stop-color="#122A20"/>
+    </linearGradient>
+    <linearGradient id="fV" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#9B6035"/>
+      <stop offset="30%" stop-color="#D89050"/>
+      <stop offset="60%" stop-color="#E8B870"/>
+      <stop offset="100%" stop-color="#C07840"/>
+    </linearGradient>
+    <linearGradient id="fH" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#E8C080"/>
+      <stop offset="40%" stop-color="#C88048"/>
+      <stop offset="100%" stop-color="#7A4428"/>
+    </linearGradient>
+    <linearGradient id="leafG" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7ABF7A"/>
+      <stop offset="50%" stop-color="#4A9060"/>
+      <stop offset="100%" stop-color="#2D6040"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="2" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Dark green background -->
+  <rect width="200" height="200" rx="38" fill="url(#bg)"/>
+  <!-- Subtle inner rim highlight -->
+  <rect width="200" height="200" rx="38" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="2"/>
+
+  <!-- F LETTER ── vertical stem -->
+  <rect x="36" y="30" width="28" height="138" rx="5" fill="url(#fV)"/>
+  <!-- Bevel on stem right edge -->
+  <rect x="60" y="30" width="4" height="138" rx="2" fill="rgba(0,0,0,0.25)"/>
+
+  <!-- F top bar -->
+  <rect x="36" y="30" width="94" height="26" rx="5" fill="url(#fH)"/>
+  <rect x="36" y="52" width="94" height="4" rx="2" fill="rgba(0,0,0,0.22)"/>
+
+  <!-- F middle bar -->
+  <rect x="36" y="88" width="70" height="22" rx="5" fill="url(#fH)"/>
+  <rect x="36" y="106" width="70" height="4" rx="2" fill="rgba(0,0,0,0.22)"/>
+
+  <!-- TREND ARROW — upward chart line -->
+  <polyline points="66,138 90,104 116,116 152,58"
+    stroke="#ECC870" stroke-width="6.5"
+    fill="none" stroke-linecap="round" stroke-linejoin="round"
+    filter="url(#glow)" opacity=".92"/>
+  <!-- Arrowhead -->
+  <polygon points="152,58 138,66 143,80" fill="#ECC870" opacity=".92"/>
+
+  <!-- LEAF — top-right, matching reference image style -->
+  <!-- Main leaf shape -->
+  <path d="M132,28 Q164,18 168,50 Q172,72 148,80 Q130,86 118,66 Q108,48 132,28 Z"
+    fill="url(#leafG)" opacity=".95"/>
+  <!-- Leaf center vein -->
+  <line x1="120" y1="68" x2="166" y2="30" stroke="#1A4A30" stroke-width="2" opacity=".55"/>
+  <!-- Lateral veins -->
+  <line x1="136" y1="38" x2="128" y2="56" stroke="#1A4A30" stroke-width="1" opacity=".4"/>
+  <line x1="148" y1="32" x2="140" y2="52" stroke="#1A4A30" stroke-width="1" opacity=".4"/>
+  <line x1="160" y1="36" x2="150" y2="58" stroke="#1A4A30" stroke-width="1" opacity=".4"/>
+  <!-- Leaf sheen -->
+  <path d="M134,30 Q155,24 164,44" stroke="rgba(255,255,255,0.25)" stroke-width="3"
+    fill="none" stroke-linecap="round"/>
+
+  <!-- 4-pointed star (bottom-right corner, matching reference) -->
+  <path d="M172,172 L175,165 L178,172 L185,175 L178,178 L175,185 L172,178 L165,175 Z"
+    fill="rgba(255,255,255,0.4)"/>
+</svg>

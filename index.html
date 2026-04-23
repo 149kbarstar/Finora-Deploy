@@ -7,9 +7,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#1A3B2F">
 <title>Finora V.1 — Money Manager</title>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23064e3b'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-size='18' font-family='serif' fill='%232dd98f'%3E₊%3C/text%3E%3C/svg%3E">
-<link rel="shortcut icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23064e3b'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-size='18' font-family='serif' fill='%232dd98f'%3E₊%3C/text%3E%3C/svg%3E">
-<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23064e3b'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-size='18' font-family='serif' fill='%232dd98f'%3E₊%3C/text%3E%3C/svg%3E">
+<link rel="icon" type="image/svg+xml" href="finora_logo.svg">
+<link rel="shortcut icon" href="finora_logo.svg">
+<link rel="apple-touch-icon" href="finora_logo.svg">
 <!-- Firebase SDKs (compat) -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -1711,8 +1711,15 @@ body.dark .txi-amount.tr { color:#5a9ef0; }
 <!-- AUTH OVERLAY — shown when not logged in -->
 <div id="auth-overlay">
   <div class="auth-card">
-    <div class="auth-logo">Finora <span style="font-family:'Sora',sans-serif;font-size:.65rem;font-weight:600;letter-spacing:.08em;color:#059669;vertical-align:middle;background:#f0fdf4;border:1px solid #86efac;border-radius:6px;padding:2px 7px;margin-left:2px">V.1</span></div>
-    <div class="auth-tagline">Money Manager · Your financial companion</div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:6px;margin-bottom:1.5rem">
+      <img src="finora_logo.svg" alt="Finora"
+           style="width:72px;height:72px;border-radius:16px;object-fit:contain;box-shadow:0 8px 24px rgba(26,59,47,.2)"
+           onerror="this.style.display='none'">
+      <div class="auth-logo" style="margin-bottom:0">Finora
+        <span style="font-family:'Sora',sans-serif;font-size:.65rem;font-weight:600;letter-spacing:.08em;color:#059669;vertical-align:middle;background:#f0fdf4;border:1px solid #86efac;border-radius:6px;padding:2px 7px;margin-left:2px">V.1</span>
+      </div>
+    </div>
+    <div class="auth-tagline" style="margin-top:0">Money Manager · Your financial companion</div>
 
     <!-- ── LOGIN FORM ── -->
     <div id="auth-login-form">
@@ -1807,9 +1814,13 @@ body.dark .txi-amount.tr { color:#5a9ef0; }
 <!-- SIDEBAR -->
 <aside class="sidebar">
   <div class="brand" style="display:flex;justify-content:space-between;align-items:flex-start">
-    <div>
-      <h1>Finora <span style="font-size:.55rem;font-weight:600;letter-spacing:.1em;color:rgba(255,255,255,.55);vertical-align:middle;background:rgba(255,255,255,.12);border-radius:5px;padding:2px 6px;font-family:'Sora',sans-serif">V.1</span></h1>
-      <p>Money Manager</p>
+    <div style="display:flex;align-items:center;gap:10px">
+      <img src="finora_logo.svg" alt="Finora" style="width:36px;height:36px;border-radius:8px;flex-shrink:0;object-fit:contain"
+           onerror="this.style.display='none'">
+      <div>
+        <h1>Finora <span style="font-size:.55rem;font-weight:600;letter-spacing:.1em;color:rgba(255,255,255,.55);vertical-align:middle;background:rgba(255,255,255,.12);border-radius:5px;padding:2px 6px;font-family:'Sora',sans-serif">V.1</span></h1>
+        <p>Money Manager</p>
+      </div>
     </div>
     <div style="display:flex;gap:4px;align-items:center">
       <button class="notif-btn" onclick="openNotifPanel()" title="Notifikasi" id="notif-btn-sb">
@@ -1875,6 +1886,7 @@ body.dark .txi-amount.tr { color:#5a9ef0; }
 <!-- MOBILE HEADER -->
 <div class="mob-header" id="mob-header">
   <button class="mob-menu-btn" onclick="openDrawer()">☰</button>
+  <img src="finora_logo.svg" alt="" style="width:28px;height:28px;border-radius:6px;object-fit:contain;flex-shrink:0" onerror="this.style.display='none'">
   <h2 id="mob-title">Dashboard</h2>
   <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
     <button class="notif-btn mob-notif" onclick="openNotifPanel()" id="notif-btn-mob" title="Notifikasi">
